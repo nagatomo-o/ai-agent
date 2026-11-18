@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ローカルLLM エージェント</title>
+  <link rel="stylesheet" href="/static/frame.css">
+</head>
+<body>
+
+<header>
+  <div>
+    <strong>ローカルLLM エージェント</strong>
+    <small id="connection-status" data-status="error">確認中...</small>
+  </div>
+  <div>
+    <small id="header-workspace"></small>
+    <button type="button" id="help-btn" aria-haspopup="dialog" aria-controls="help-dialog">ヘルプ</button>
+    <button type="button" id="reset-btn">新しい会話</button>
+  </div>
+</header>
+
+<nav aria-label="設定とツール">
+  <section>
+    <label for="model-select">使用モデル</label>
+    <select id="model-select"></select>
+
+    <form id="workspace-form">
+      <label for="workspace-input">作業フォルダ</label>
+      <input id="workspace-input" type="text" placeholder="C:\path\to\project">
+      <small id="workspace-error" hidden></small>
+      <p><button type="button" id="workspace-apply-btn">フォルダを切替</button></p>
+    </form>
+  </section>
+</nav>
+
+<main>
+  <section id="chat-log" aria-live="polite" aria-label="会話履歴"></section>
+
+  <form id="chat-form">
+    <label for="prompt-input">指示・質問</label>
+    <textarea id="prompt-input" rows="3" placeholder="例: このフォルダのファイルを一覧表示して、構成を日本語で説明してください"></textarea>
+    <p>
+      <button type="submit" id="send-btn">送信</button>
+      <button type="button" id="stop-btn" disabled>停止</button>
+      <small id="agent-status"></small>
+    </p>
+  </form>
+</main>
+
+<footer>
+  <small id="footer-info">Ollama 接続先を確認中...</small>
+</footer>
+
+<dialog id="help-dialog" aria-labelledby="help-title">
+  <h2 id="help-title">利用できる機能</h2>
+  <p>
+    <small>読み取り系は確認なしで実行されます。書き込み系は、画面に表示される内容を確認して承認した後にのみ実行されます。</small>
+  </p>
+  <ul id="tool-list" data-kind="tools"></ul>
+  <p>
+    <button type="button" id="help-close-btn">閉じる</button>
+  </p>
+</dialog>
+
+<output id="toast" aria-live="polite"></output>
+
+<script type="module" src="/static/app.js"></script>
+</body>
+</html>

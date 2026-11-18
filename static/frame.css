@@ -1,0 +1,489 @@
+/* ==========================================================================
+   frame.css — 要素セレクタだけのミニマム CSS フレーム
+   対象: 管理画面・ダッシュボード・フォーム (Gmail ライクな業務 UI)
+   コンセプト: 単調 / シンプル / スマート
+
+   使い方: <link rel="stylesheet" href="frame.css">
+   アプリシェルは body 直下に header + nav + main (+footer) を並べるだけ。
+
+   【ルール】
+   1. セレクタは HTML 要素ベース。状態は疑似クラスと aria 属性のみ。
+      クラス例外は 4 つだけ: a.button (ボタンに見えるリンク) /
+      .currency (金額: 右寄せ) / .field (単位付き入力欄の囲み) /
+      .pager (ページネーション)
+   2. 単位は rem 統一 (1rem = 16px 基準)
+   3. 余白は 3 段階: padding 0.5rem (部品) / 0.25rem 0.75rem (ボタン) /
+      1rem (面), margin 1rem
+   4. 角丸は 0.25rem 固定
+   5. 色は :root の変数のみ。足したくなったら :root に 1 行追加する
+   6. 濃い配色は prefers-color-scheme で自動切換え (このブロックを
+      削除すればライト固定)
+
+   【例外 (意図的に許容)】
+   - 境界線 1px / フォーカスリング 2px: rem 丸めでにじむため px
+   - リストのインデント 1.5rem: 行頭記号の幅
+   - 見出しのフォントサイズ 2 / 1.5 / 1.25 / 1rem
+   - 補助文字 0.875rem (small / code)
+   - ルートフォント: clamp(0.625rem, 100vw / 36, 1rem) — 画面幅連動
+     (下限 10px / 上限 16px。分割数 36 と下限が調整ポイント)
+   ========================================================================== */
+
+/* ── 1. トークン ─────────────────────────────────────────────────────── */
+:root {
+  --bg:        #f5f6f7;  /* 画面の地 */
+  --panel:     #ffffff;  /* 面: ヘッダー・パネル・入力欄 */
+  --soft:      #eef0f2;  /* 控えめの地: 表ヘッダー・ホバー・選択中 */
+  --line:      #d5dbe0;  /* 境界線 */
+  --ink:       #1d2126;  /* 本文 */
+  --muted:     #626d78;  /* 補助テキスト */
+  --accent:    #2563eb;  /* 主操作・リンク・フォーカス。変えたいときはここだけ */
+  --on-accent: #ffffff;  /* 主操作の上に載せる文字 */
+  --ok:        #1a7f37;  /* 状態: 正常 */
+  --warn:      #9a6700;  /* 状態: 注意 */
+  --err:       #cf222e;  /* 状態: 異常 */
+
+  --backdrop:  rgb(0 0 0 / 0.45);  /* ダイアログ開示中の暗幕 */
+
+  --mono:      ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  /* 等幅: コード表記と英数字前提の入力欄 */
+
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14161a; --panel: #1d2025; --soft: #272b31;
+    --line: #343a41; --ink: #e6e9ec; --muted: #99a3ad;
+    --accent: #58a6ff; --on-accent: #14161a;
+    --ok: #3fb950; --warn: #d29922; --err: #f85149;
+    --backdrop: rgb(0 0 0 / 0.6);
+  }
+}
+
+/* ── 2. 土台 ─────────────────────────────────────────────────────────── */
+html {
+  height: 100%;
+  /* ルートフォントを画面幅に連動 (100vw / 36 = 画面幅の 1/36)。
+     スマホでは全体が小さく縮み、576px 以上で 1rem=16px に頭打ち。
+     ※ html の font-size 内の rem は常にブラウザ既定の 16px 基準で解釈される
+        (自分自身を参照しないので循環しない) */
+  font-size: clamp(0.625rem, 100vw / 36, 1rem);
+  /* ルートが小さい画面でも Android の自動文字拡大 (フォントブースト) を防ぐ */
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100%;
+  font-family: system-ui, -apple-system, "Segoe UI", "Hiragino Kaku Gothic ProN",
+               "Noto Sans JP", Meiryo, sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--bg);
+}
+
+img { max-width: 100%; }
+
+/* 見出しはサイズ以外すべて共通 */
+h1, h2, h3, h4, h5, h6 { margin: 1rem 0; font-weight: 600; line-height: 1.3; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.5rem; }
+h3 { font-size: 1.25rem; }
+h4, h5, h6 { font-size: 1rem; }
+
+/* フローの要素は縦に 1rem ずつ積む */
+p, ul, ol, dl, table, pre, form, fieldset, details,
+section, article, aside { margin: 1rem 0; }
+
+/* 面 (パネル) の内側は詰めない: 最初と最後の子の余白を 0 に */
+section > :first-child, article > :first-child, aside > :first-child,
+dialog > :first-child, details > :first-child,
+body > main > :first-child { margin-top: 0; }
+section > :last-child, article > :last-child, aside > :last-child,
+dialog > :last-child, details > :last-child,
+body > main > :last-child { margin-bottom: 0; }
+
+small { font-size: 0.875rem; color: var(--muted); }
+mark  { background: var(--soft); color: inherit; }
+a     { color: inherit; text-decoration: underline; text-underline-offset: 0.125rem; }
+a:hover { text-decoration: none; }
+hr    { border: 0; border-top: 1px solid var(--line); }
+ul, ol { padding-inline-start: 1.5rem; }
+blockquote { margin: 1rem 0; padding: 0 1rem; border-left: 1px solid var(--line); color: var(--muted); }
+summary { cursor: pointer; }
+details {
+  padding: 0.5rem 1rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 0.25rem;
+}
+
+code, kbd, samp, pre {
+  font-family: var(--mono);
+  font-size: 0.875rem;
+}
+kbd  { border: 1px solid var(--line); border-radius: 0.25rem; padding: 0 0.25rem; }
+pre  { padding: 0.5rem 1rem; background: var(--soft); border-radius: 0.25rem; overflow-x: auto; }
+
+/* ── 3. アプリシェル: body 直下に header + nav + main を並べるだけ ────── */
+/* 画面の高さに固定し、nav と main が独立してスクロール。
+   メニューが縦に長くなってもメイン領域のスクロールと連動しない */
+body:has(> nav) {
+  display: grid;
+  grid-template-columns: 14rem minmax(0, 1fr);
+  grid-template-rows: auto 1fr auto;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+body > header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 1rem;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+
+body > nav {
+  padding: 1rem 0.5rem;
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  overflow-y: auto;
+  min-height: 0;
+  scrollbar-width: thin;
+}
+
+body > main {
+  padding: 1rem;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+body > footer {
+  grid-column: 1 / -1;
+  padding: 0.5rem 1rem;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+}
+
+nav ul { margin: 0; padding: 0; list-style: none; }
+nav a {
+  display: block;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+nav a:hover { background: var(--soft); }
+nav a[aria-current] { background: var(--soft); font-weight: 600; }
+
+/* ── 4. 表 ───────────────────────────────────────────────────────────── */
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--line); }
+thead th { background: var(--soft); font-weight: 600; white-space: nowrap; }
+tbody tr:hover { background: var(--soft); }
+caption {
+  caption-side: bottom;
+  padding-top: 0.5rem;
+  text-align: left;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+/* ページネーション (クラス例外 4)。テーブルの直後に置く:
+   <ul class="pager"><li><span>前へ</span></li><li><a href="#">1</a></li>
+   <li><span aria-current="page">2</span></li><li><a href="#">次へ</a></li></ul>
+   現在ページは span aria-current、無効な項目 (前へ等) は span のみ */
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  justify-content: flex-end;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.875rem;
+}
+.pager a {
+  display: inline-block;
+  min-width: 2rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 0.25rem;
+  text-align: center;
+  text-decoration: none;
+}
+.pager a:hover { background: var(--soft); }
+.pager [aria-current] {
+  display: inline-block;
+  min-width: 2rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 0.25rem;
+  background: var(--soft);
+  text-align: center;
+  font-weight: 600;
+}
+.pager span:not([aria-current]) { color: var(--muted); }
+
+/* ── 5. フォーム ─────────────────────────────────────────────────────── */
+input, select, textarea, button { font: inherit; color: inherit; }
+
+label { display: block; margin: 1rem 0 0; }
+
+/* チェック・ラジオを直接含む label は横に並べる (選択肢の並びが基本形)。
+   縦に積みたいときは各 label を <p> で囲む */
+label:has(> input[type="checkbox"]),
+label:has(> input[type="radio"]) {
+  display: inline-block;
+  margin: 0 0.75rem 0 0;
+}
+
+/* 幅を持たせたい部品は全幅。チェック・レンジ・ファイルは除外。
+   (:is の詳細度は 1 個分なので、.field 側の padding-right が勝てる) */
+input:not(:is([type="checkbox"], [type="radio"], [type="range"], [type="file"])),
+select, textarea {
+  width: 100%;
+  max-width: 32rem;
+  padding: 0.5rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 0.25rem;
+}
+
+textarea { resize: vertical; }
+
+input[type="checkbox"], input[type="radio"] {
+  width: 1rem;
+  height: 1rem;
+  margin: 0 0.5rem 0 0;
+  vertical-align: -0.125em;
+  accent-color: var(--accent);
+}
+
+fieldset {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.25rem;
+}
+legend { padding: 0 0.25rem; font-weight: 600; }
+::placeholder { color: var(--muted); }
+
+/* 英数字前提の入力欄は等幅。type が素性を示すものに加え、text 入力欄は
+   inputmode 属性を付けたものだけ等幅にする (属性セレクタで判定) */
+input[type="email"], input[type="url"], input[type="password"], input[type="tel"],
+input[inputmode="numeric"], input[inputmode="decimal"], input[inputmode="tel"],
+input[inputmode="email"], input[inputmode="url"] {
+  font-family: var(--mono);
+}
+
+/* 入力欄の直後に置いた small はエラー注記として欄の下に出る。
+   (label の中の small は補足ヒントのまま。どちらも font-size 0.875rem) */
+input + small, select + small, textarea + small, .field + small {
+  display: block;
+  margin: 0.5rem 0 0;
+  color: var(--err);
+}
+/* 入力チェックの失敗は入力欄の枠を赤に。
+   標準の検証は :user-invalid、JS 連携は aria-invalid="true" */
+input:user-invalid, select:user-invalid, textarea:user-invalid,
+input[aria-invalid="true"], select[aria-invalid="true"],
+textarea[aria-invalid="true"] {
+  border-color: var(--err);
+}
+
+/* 金額 (クラス例外 2)。入力欄でも表示側 (td など) でも付けるだけで右寄せ。
+   tabular-nums で数字が揃い、表の中で桁が合う */
+.currency {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 単位付き入力欄 (クラス例外 3)。input を .field で囲み、単位を <span> で置く:
+   <span class="field"><input ...><span>円</span></span>
+   (input は置換要素で ::after が効かないため、囲み方式にしている) */
+.field { position: relative; display: block; max-width: 32rem; }
+.field input { width: 100%; padding-right: 2.25rem; }
+.field > span {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+
+button {
+  padding: 0.25rem 0.75rem;
+  background: var(--accent);
+  color: var(--on-accent);
+  border: 1px solid var(--accent);
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+button:hover { opacity: 0.85; }
+
+/* 消極的な操作は type="button" / type="reset" で控えめに */
+button[type="button"], button[type="reset"] {
+  background: var(--panel);
+  color: var(--ink);
+  border-color: var(--line);
+}
+button[type="button"]:hover, button[type="reset"]:hover { opacity: 1; background: var(--soft); }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+:focus-visible { outline: 2px solid var(--accent); }
+
+/* ボタンに見えるリンク (唯一のクラス例外)。button と同じ見た目 */
+a.button {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: var(--accent);
+  color: var(--on-accent);
+  border: 1px solid var(--accent);
+  border-radius: 0.25rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+a.button:hover { opacity: 0.85; }
+
+/* ── 6. ダイアログ ───────────────────────────────────────────────────── */
+dialog {
+  padding: 1rem;
+  max-width: 32rem;
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 0.25rem;
+}
+dialog::backdrop { background: var(--backdrop); }
+
+/* ── 7. グローバルメッセージ (トースト) ──────────────────────────────── */
+/* body 直下の <output> に JS で <p data-type="success|error"> を足すと
+   右上に表示され、取り除くと消える。操作の結果を伝える場所。
+   <output aria-live="polite"> とすれば読み上げにも通知される */
+body > output {
+  position: fixed;
+  top: 3rem;
+  right: 1rem;
+  display: grid;
+  gap: 0.5rem;
+  z-index: 2;
+  pointer-events: none;
+}
+body > output p {
+  margin: 0;
+  padding: 0.5rem 1rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 0.25rem;
+  animation: toast-in 0.15s ease-out;
+}
+output p[data-type="success"] { border-color: var(--ok); }
+output p[data-type="error"]   { border-color: var(--err); }
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(-0.25rem); }
+}
+
+/* ── 8. 狭い画面: サイドバーを横並びのタブに折り畳む ─────────────────── */
+@media (max-width: 48rem) {
+  /* 行は header / タブ列 / スクロールする main / footer の 4 段に組み直す */
+  body:has(> nav) {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr auto;
+  }
+  body > nav {
+    padding: 0.5rem;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  body > nav ul { display: flex; overflow-x: auto; gap: 0.5rem; scrollbar-width: thin; }
+}
+
+/* アニメーション縮小設定では動きを一切使わない */
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+
+/* ── 9. エージェントチャット拡張 (要素・属性セレクタのみ) ───────────── */
+body > header > div,
+body > main form p:has(> button) {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+body > main:has(> section[aria-live]) {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow: hidden;
+}
+
+body > main > section[aria-live] {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0;
+  padding-right: 0.25rem;
+  scrollbar-width: thin;
+}
+
+body > main > form {
+  flex: 0 0 auto;
+  margin: 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+
+body > main > form textarea {
+  max-width: none;
+}
+
+main article {
+  margin: 0 0 1rem;
+  padding: 1rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 0.25rem;
+}
+
+main article[data-role="user"] {
+  background: var(--soft);
+}
+
+main article[data-kind="approval"] {
+  border-color: var(--warn);
+}
+
+main article header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+main article pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+nav ul[data-kind="tools"] li {
+  padding: 0.25rem 0;
+  font-size: 0.875rem;
+}
+
+[data-status="ok"] { color: var(--ok); }
+[data-status="error"] { color: var(--err); }
